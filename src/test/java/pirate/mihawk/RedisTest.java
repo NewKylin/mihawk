@@ -1,11 +1,16 @@
 package pirate.mihawk;
 
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.sync.RedisCommands;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
+import pirate.mihawk.pojo.RedisServerInfo;
 import pirate.mihawk.pojo.User;
 
 import java.io.Serializable;
@@ -23,6 +28,8 @@ public class RedisTest {
     private RedisTemplate<String, String> strRedisTemplate;
     @Autowired
     private RedisTemplate<String, Serializable> serializableRedisTemplate;
+    @Autowired
+    private RedisClient redisClient;
 
     @Test
     public void testString() {
@@ -32,12 +39,29 @@ public class RedisTest {
 
     @Test
     public void testSerializable() {
-        User user=new User();
+        User user = new User();
         user.setId(1L);
         user.setUserName("朝雾轻寒");
         user.setUserSex("男");
-        serializableRedisTemplate.opsForValue().set("user", user);
-        User user2 = (User) serializableRedisTemplate.opsForValue().get("user");
-        System.out.println("user:"+user2.getId()+","+user2.getUserName()+","+user2.getUserSex());
+        for (int i = 0; i < 10000; i++) {
+
+            serializableRedisTemplate.opsForValue().set("user" + i, user);
+/*            User user2 = (User) serializableRedisTemplate.opsForValue().get("user");
+            System.out.println("user:" + user2.getId() + "," + user2.getUserName() + "," + user2.getUserSex());*/
+        }
+    }
+
+    @Test
+    public void  testInfo(){
+        StatefulRedisConnection<String, String> connection = redisClient.connect();
+
+        System.out.println("Connected to Redis");
+
+        RedisCommands<String, String> sync = connection.sync();
+
+        String info = sync.info("memory");
+        System.out.println(info);
+        connection.close();
+        redisClient.shutdown();
     }
 }
