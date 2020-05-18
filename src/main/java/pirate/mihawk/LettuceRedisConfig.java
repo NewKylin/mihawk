@@ -2,6 +2,8 @@ package pirate.mihawk;
 
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.api.StatefulRedisConnection;
+import jdk.nashorn.internal.ir.ReturnNode;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
@@ -32,5 +34,11 @@ public class LettuceRedisConfig {
     @Bean
     public RedisClient redisClient(){
         return RedisClient.create(RedisURI.create("redis://192.168.177.131:6379"));
+    }
+
+    @Bean
+    public StatefulRedisConnection<String, String> getStatefulRedisConnection(){
+        StatefulRedisConnection<String, String> connection = redisClient().connect();
+        return connection;
     }
 }

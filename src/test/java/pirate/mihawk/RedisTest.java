@@ -14,6 +14,7 @@ import pirate.mihawk.pojo.RedisServerInfo;
 import pirate.mihawk.pojo.User;
 
 import java.io.Serializable;
+import java.util.HashMap;
 
 /**
  * @program: mihawk
@@ -60,6 +61,14 @@ public class RedisTest {
         RedisCommands<String, String> sync = connection.sync();
 
         String info = sync.info("memory");
+        String[] split = info.split("\r\n");
+        HashMap<String, String> memoryInfoMap = new HashMap<>();
+        for (String s : split){
+            String[] split1 = s.split(":");
+            if(split1.length>1){
+                memoryInfoMap.put(split1[0],split1[1]);
+            }
+        }
         System.out.println(info);
         connection.close();
         redisClient.shutdown();

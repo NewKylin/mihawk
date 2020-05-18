@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>layout 后台大布局 - Layui</title>
+    <link th:href="@{/layui/css/layui.css}" rel="stylesheet" />
+    <!-- 引入 ECharts 文件 -->
+    <script src="/apache-echarts/echarts.js" ></script>
+</head>
+<body class="layui-layout-body">
+<div class="layui-layout layui-layout-admin">
+    <div class="layui-header">
+        <div class="layui-logo">layui 后台布局</div>
+        <!-- 头部区域（可配合layui已有的水平导航） -->
+        <ul class="layui-nav layui-layout-left">
+            <li class="layui-nav-item"><a href="">控制台</a></li>
+            <li class="layui-nav-item"><a href="">商品管理</a></li>
+            <li class="layui-nav-item"><a href="">用户</a></li>
+            <li class="layui-nav-item"><a href="javascript:;">其它系统</a>
+                <dl class="layui-nav-child">
+                    <dd>
+                        <a href="">邮件管理</a>
+                    </dd>
+                    <dd>
+                        <a href="">消息管理</a>
+                    </dd>
+                    <dd>
+                        <a href="">授权管理</a>
+                    </dd>
+                </dl></li>
+        </ul>
+        <ul class="layui-nav layui-layout-right">
+            <li class="layui-nav-item"><a href="javascript:;"> aaa 贤心 </a>
+                <dl class="layui-nav-child">
+                    <dd>
+                        <a href="">基本资料</a>
+                    </dd>
+                    <dd>
+                        <a href="">安全设置</a>
+                    </dd>
+                </dl></li>
+            <li class="layui-nav-item"><a href="">退了</a></li>
+        </ul>
+    </div>
+
+    <div class="layui-side layui-bg-black">
+        <div class="layui-side-scroll">
+            <!-- 左侧导航区域（可配合layui已有的垂直导航） -->
+            <ul class="layui-nav layui-nav-tree" lay-filter="test">
+                <li class="layui-nav-item layui-nav-itemed"><a class=""
+                                                               href="javascript:;">所有商品</a>
+                    <dl class="layui-nav-child">
+                        <dd>
+                            <a href="javascript:;">列表一</a>
+                        </dd>
+                        <dd>
+                            <a href="javascript:;">列表二</a>
+                        </dd>
+                        <dd>
+                            <a href="javascript:;">列表三</a>
+                        </dd>
+                        <dd>
+                            <a href="">超链接</a>
+                        </dd>
+                    </dl></li>
+                <li class="layui-nav-item"><a href="javascript:;">解决方案</a>
+                    <dl class="layui-nav-child">
+                        <dd>
+                            <a href="javascript:;">列表一</a>
+                        </dd>
+                        <dd>
+                            <a href="javascript:;">列表二</a>
+                        </dd>
+                        <dd>
+                            <a href="">超链接</a>
+                        </dd>
+                    </dl></li>
+                <li class="layui-nav-item"><a href="">云市场</a></li>
+                <li class="layui-nav-item"><a href="">发布商品</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="layui-body">
+        <!-- 为 ECharts 准备一个具备大小（宽高）的 DOM -->
+        <div id="main" style="width: 600px;height:400px;"></div>
+    </div>
+
+    <div class="layui-footer">
+        <!-- 底部固定区域 -->
+        © layui.com - 底部固定区域
+    </div>
+</div>
+<script th:src="@{/layui/layui.js}"></script>
+<script th:src="@{/layui/jquery-3.5.1.js}"></script>
+<script>
+    //JavaScript代码区域
+    layui.use('element', function() {
+        var element = layui.element;
+
+    });
+
+    /**
+     * 公共方法类
+     *
+     * 使用  变量名=function()定义函数时，如果在变量名前加var，则这个变量变成局部变量
+     */
+    var Common = function() {
+
+        /*
+         * 获取url参数
+         */
+        var getQueryStr = function(sUrlParam, sArgName) {
+            var retval = "";
+            if (sUrlParam == null || sUrlParam.length == 0) {
+                return retval;
+            }
+            var args = sUrlParam.split("&");
+            for (var i = 0; i < args.length; i++) {
+                sUrlParam = args[i];
+                var arg = sUrlParam.split("=");
+                if (arg.length <= 1)
+                    continue;
+                if (arg[0] == sArgName)
+                    retval = arg[1];
+            }
+            return retval;
+        }
+
+        /*
+         * ajax发送post请求
+         */
+        var postReq = function(url, param, fnCallback, isIndex) {
+            var target, options = {
+                title : "异常信息",
+                content : "",
+                bodyType : "errorMessage"
+            };
+
+            if (isIndex) {
+                target = window;
+            }
+            else {
+                target = window.parent;
+            }
+
+            $.ajax({
+                url : url,
+                type : "POST",
+                timeout : 300000,
+                headers:"Access-Control-Allow-Origin:*",
+                contentType : "application/x-www-form-urlencoded;charset=UTF-8",
+                dataType : "json",
+                data : param
+            }).done(function(data, textStatus, jqXHR) {
+                if (jqXHR.getResponseHeader('sessionStatus') == 'timeout') {
+                    options.content = '会话已经超时.';
+                    target.showModal(options, function() {
+                        target.location.href = 'login.html';
+                    });
+                }
+                else if (!data) {
+                    options.content = '无返回信息.';
+                    target.showModal(options, function() {
+                        // donothing
+                    });
+                }
+                else {
+                    fnCallback(data);
+                }
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                if (jqXHR.status == 0) {
+                    options.content = '请求异常，网络连接失败！';
+                }
+                else if (jqXHR.status == 403) {
+                    options.content = jqXHR.responseJSON.message;
+                }
+                else {
+                    options.content = "请求异常，状态码：" + jqXHR.status;
+                }
+
+                target.showModal(options, function() {
+                    // donothing
+                });
+            });
+        };
+
+        var postReq = function(url, param, fnCallback, isIndex) {
+            var target, options = {
+                title : "异常信息",
+                content : "",
+                bodyType : "errorMessage"
+            };
+
+            if (isIndex) {
+                target = window;
+            }
+            else {
+                target = window.parent;
+            }
+
+            $.ajax({
+                url : url,
+                type : "POST",
+                timeout : 300000,
+                contentType : "application/x-www-form-urlencoded;charset=UTF-8",
+                dataType : "json",
+                data : param
+            }).done(function(data, textStatus, jqXHR) {
+                if (jqXHR.getResponseHeader('sessionStatus') == 'timeout') {
+                    options.content = '会话已经超时.';
+                    target.showModal(options, function() {
+                        target.location.href = 'login.html';
+                    });
+                }
+                else if (!data) {
+                    options.content = '无返回信息.';
+                    target.showModal(options, function() {
+                        // donothing
+                    });
+                }
+                else {
+                    fnCallback(data);
+                }
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                if (jqXHR.status == 0) {
+                    options.content = '请求异常，网络连接失败！';
+                }
+                else if (jqXHR.status == 403) {
+                    options.content = jqXHR.responseJSON.message;
+                }
+                else {
+                    options.content = "请求异常，状态码：" + jqXHR.status;
+                }
+
+                target.showModal(options, function() {
+                    // donothing
+                });
+            });
+        };
+
+        return {
+            getQueryStr : getQueryStr,
+            postReq : postReq
+        }
+    }();
+
+    Common.postReq('RedisServerInfo/memory', null, function(obj) {
+        debugger
+        var v1= Number(obj.used_memory);
+        var v2= Number(obj.total_system_memory) - Number(obj.used_memory);
+        // 基于准备好的dom，初始化echarts实例
+        var myChart = echarts.init(document.getElementById('main'));
+
+        // 指定图表的配置项和数据
+        var option = {
+            title: {
+                text: '内存使用量',
+                left: 'center'
+            },
+            tooltip: {
+                trigger: 'item',
+                formatter: '{a} <br/>{b} : {c} ({d}%)'
+            },
+            legend: {
+                orient: 'vertical',
+                left: 'left',
+                data: ['已使用内存', '剩余内存']
+            },
+            series: [
+                {
+                    name: '内存使用情况',
+                    type: 'pie',
+                    radius: '55%',
+                    center: ['50%', '60%'],
+                    data: [
+                        {value: v1, name: '已使用内存'},
+                        {value: v2, name: '剩余内存'},
+                    ],
+                    emphasis: {
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+                }
+            ]
+        };
+
+        // 使用刚指定的配置项和数据显示图表。
+        myChart.setOption(option);
+    });
+</script>
+</body>
+</html>
