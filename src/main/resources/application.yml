@@ -1,0 +1,39 @@
+spring:
+  redis:
+    database: 0
+    host: 192.168.61.131
+    port: 6379
+    timeout: 3000
+    lettuce:
+      pool:
+        max-active: 8
+        max-wait: -1
+        max-idle: 8
+        min-idle: 0
+
+  thymeleaf:
+    cache: false
+    suffix: .html
+    mode: HTML5
+    encoding: utf-8
+  resources:
+    chain:
+      strategy:
+        content:
+          enabled: true
+          paths: /**
+  profiles:
+    active: test
+debug: true
+---
+
+spring:
+  profiles: dev
+server:
+  port: 8080
+
+---
+spring:
+  profiles: test
+server:
+  port: 2000

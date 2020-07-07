@@ -10,6 +10,9 @@ import io.netty.handler.codec.redis.RedisBulkStringAggregator;
 import io.netty.handler.codec.redis.RedisDecoder;
 import io.netty.handler.codec.redis.RedisEncoder;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+
 /**
  * @program: mihawk
  * @description: Redis客户端
@@ -21,9 +24,17 @@ public class RedisClient {
     private int port;
     private Channel channel;
     private Object result;
-    final DefaultChannelPromise defaultChannelPromise = new DefaultChannelPromise(channel);
+    static CompletableFuture<Object> completableFuture = new CompletableFuture();
 
-    public RedisClient(String host,int port){
+    private static RedisClient redisClient;
+
+    public static RedisClient getRedisClient(String host,int port){
+        if(redisClient == null)
+            redisClient = new RedisClient(host,port);
+        return redisClient;
+    }
+
+    private RedisClient(String host,int port){
         this.host = host;
         this.port = port;
     }
@@ -40,7 +51,7 @@ public class RedisClient {
                     pipeline.addLast(new RedisEncoder());
                     pipeline.addLast(new RedisBulkStringAggregator());
                     pipeline.addLast(new RedisArrayAggregator());
-                    pipeline.addLast(new RedisCommadHandler());
+                    pipeline.addLast(new RedisCommadHandler(completableFuture));
                 }
             });
             ChannelFuture sync = bootstrap.connect(host, port).sync();
@@ -67,7 +78,10 @@ public class RedisClient {
                 if (!future.isSuccess())
                     setResult("命令执行发生错误");
             }).sync();
+            result = completableFuture.get();
         }catch (InterruptedException e){
+            e.printStackTrace();
+        }catch (ExecutionException e){
             e.printStackTrace();
         }
         return result;

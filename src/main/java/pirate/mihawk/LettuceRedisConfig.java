@@ -3,7 +3,6 @@ package pirate.mihawk;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
-import jdk.nashorn.internal.ir.ReturnNode;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
@@ -28,12 +27,13 @@ public class LettuceRedisConfig {
         redisTemplate.setKeySerializer(new StringRedisSerializer());
         redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer());
         redisTemplate.setConnectionFactory(factory);
+
         return redisTemplate;
     }
 
     @Bean
     public RedisClient redisClient(){
-        return RedisClient.create(RedisURI.create("redis://192.168.177.131:6379"));
+        return RedisClient.create(RedisURI.create("redis://192.168.61.136:6379"));
     }
 
     @Bean

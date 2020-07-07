@@ -9,5 +9,4 @@ public class MihawkApplication {
     public static void main(String[] args) {
         SpringApplication.run(MihawkApplication.class, args);
     }
-
 }

@@ -11,6 +11,7 @@ import io.netty.util.CharsetUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * @program: mihawk
@@ -19,9 +20,10 @@ import java.util.List;
  * @create: 2020-07-06 21:44
  **/
 public class RedisCommadHandler extends ChannelDuplexHandler {
-    DefaultChannelPromise channelPromise;
-    public RedisCommadHandler(DefaultChannelPromise defaultChannelPromise){
-        this.channelPromise = defaultChannelPromise;
+    CompletableFuture<Object> completableFuture;
+
+    public RedisCommadHandler(CompletableFuture<Object> completableFuture){
+        this.completableFuture = completableFuture;
     }
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
@@ -37,6 +39,7 @@ public class RedisCommadHandler extends ChannelDuplexHandler {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         RedisMessage redisMessage = (RedisMessage) msg;
+        completableFuture.complete(getRedisResponse(redisMessage));
     }
     private Object getRedisResponse(RedisMessage msg) {
         Object redisMessage = null;
