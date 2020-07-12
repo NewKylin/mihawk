@@ -33,7 +33,7 @@ public class LettuceRedisConfig {
 
     @Bean
     public RedisClient redisClient(){
-        return RedisClient.create(RedisURI.create("redis://192.168.61.136:6379"));
+        return RedisClient.create(RedisURI.create("redis://192.168.177.131:6379"));
     }
 
     @Bean

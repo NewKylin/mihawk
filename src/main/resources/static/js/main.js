@@ -23,7 +23,8 @@ var e_pos = $('#pos')
        data: {command: input},
        //dataType: 'jsonp',
        success: function (res) {
-         e_main.html($('#main').html() + '[<span id="usr">' + usrName + '</span>@<span class="host">ursb.me</span> ' + position + ']% ' + input + '<br/>' + res);
+         e_main.html($('#main').html() + '<br/>'+ '[<span id="usr">' + usrName + '</span>@<span' +
+             ' class="host">ursb.me</span> ' + position + ']% ' + input + '<br/>' + res);
        },
      });
    }

@@ -17,7 +17,7 @@ public class RedisClientController {
 
     @RequestMapping("/command")
     public Object command(String command){
-        RedisClient redisClient = RedisClient.getRedisClient("192.168.61.136", 6379);
+        RedisClient redisClient = RedisClient.getRedisClient("192.168.177.131", 6379);
         Object o = redisClient.sendCommand(command);
         return o;
     }

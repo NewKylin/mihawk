@@ -24,7 +24,6 @@ public class RedisClient {
     private int port;
     private Channel channel;
     private Object result;
-    static CompletableFuture<Object> completableFuture = new CompletableFuture();
 
     private static RedisClient redisClient;
 
@@ -51,7 +50,7 @@ public class RedisClient {
                     pipeline.addLast(new RedisEncoder());
                     pipeline.addLast(new RedisBulkStringAggregator());
                     pipeline.addLast(new RedisArrayAggregator());
-                    pipeline.addLast(new RedisCommadHandler(completableFuture));
+                    pipeline.addLast(new RedisCommadHandler());
                 }
             });
             ChannelFuture sync = bootstrap.connect(host, port).sync();
@@ -74,11 +73,12 @@ public class RedisClient {
         if(getChannel() == null)
             init();
         try {
-            ChannelFuture channelFuture = channel.writeAndFlush(command).addListener(future -> {
+            RedisCommand redisCommand = new RedisCommand(command);
+            ChannelFuture channelFuture = channel.writeAndFlush(redisCommand).addListener(future -> {
                 if (!future.isSuccess())
                     setResult("命令执行发生错误");
             }).sync();
-            result = completableFuture.get();
+            result = redisCommand.getCompletableFuture().get();
         }catch (InterruptedException e){
             e.printStackTrace();
         }catch (ExecutionException e){

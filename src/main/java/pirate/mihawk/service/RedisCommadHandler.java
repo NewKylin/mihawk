@@ -4,7 +4,6 @@ import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
-import io.netty.channel.DefaultChannelPromise;
 import io.netty.handler.codec.CodecException;
 import io.netty.handler.codec.redis.*;
 import io.netty.util.CharsetUtil;
@@ -21,13 +20,13 @@ import java.util.concurrent.CompletableFuture;
  **/
 public class RedisCommadHandler extends ChannelDuplexHandler {
     CompletableFuture<Object> completableFuture;
-
-    public RedisCommadHandler(CompletableFuture<Object> completableFuture){
-        this.completableFuture = completableFuture;
-    }
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-        String[] commands = ((String) msg).split("\\s+");
+        RedisCommand commandObj = (RedisCommand)msg;
+        if(commandObj == null)
+            return;
+        completableFuture = commandObj.getCompletableFuture();
+        String[] commands = commandObj.getRedisCommand().split("\\s+");
         List<RedisMessage> children = new ArrayList<>(commands.length);
         for (String cmdString : commands) {
             children.add(new FullBulkStringRedisMessage(ByteBufUtil.writeUtf8(ctx.alloc(), cmdString)));
@@ -41,19 +40,19 @@ public class RedisCommadHandler extends ChannelDuplexHandler {
         RedisMessage redisMessage = (RedisMessage) msg;
         completableFuture.complete(getRedisResponse(redisMessage));
     }
-    private Object getRedisResponse(RedisMessage msg) {
-        Object redisMessage = null;
+    private String getRedisResponse(RedisMessage msg) {
+        String redisMessage = "";
         if (msg instanceof SimpleStringRedisMessage) {
-            redisMessage = ((SimpleStringRedisMessage) msg).content();
+            redisMessage += ((SimpleStringRedisMessage) msg).content() +"\n";
         } else if (msg instanceof ErrorRedisMessage) {
-            redisMessage = ((ErrorRedisMessage) msg).content();
+            redisMessage += ((ErrorRedisMessage) msg).content() +"\n";;
         } else if (msg instanceof IntegerRedisMessage) {
-            redisMessage = ((IntegerRedisMessage) msg).value();
+            redisMessage += ((IntegerRedisMessage) msg).value() +"\n";
         } else if (msg instanceof FullBulkStringRedisMessage) {
-            redisMessage = getString((FullBulkStringRedisMessage) msg);
+            redisMessage += getString((FullBulkStringRedisMessage) msg) +"\n";
         } else if (msg instanceof ArrayRedisMessage) {
             for (RedisMessage child : ((ArrayRedisMessage) msg).children()) {
-                getRedisResponse(child);
+                redisMessage += getRedisResponse(child) +"\n";
             }
         } else {
             throw new CodecException("unknown message type: " + msg);
